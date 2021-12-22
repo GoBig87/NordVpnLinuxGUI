@@ -1,5 +1,4 @@
 from subprocess import Popen, PIPE
-from threading import Thread
 import webbrowser
 
 
@@ -26,31 +25,35 @@ class NordClient(object):
         self._version = "version"
 
     def account(self, success_cb, error_cb):
-        cmd = [self._base_cmd, self._account]
+        cmd = f"{self._base_cmd} {self._account}"
         self._send_command(cmd, success_cb, error_cb)
 
     def check_login(self, output):
-        if output != "You are not logged in.":
+        print(output)
+        if "You are not logged in." not in output:
             self.logged_in = True
 
     def login(self, success_cb, error_cb):
-        cmd = [self._base_cmd, self._login]
+        cmd = f"{self._base_cmd} {self._login}"
         self._send_command(cmd, success_cb, error_cb)
 
-    def _login_success(self, output):
+    def login_success(self, output):
+        print(output)
         if output == "You are already logged in.":
             pass
         else:
-            url = output.split("http")[0]
+            url = output.split("Continue in the browser: ")[1]
+            print(url)
             webbrowser.open(url)
 
     def _base_error_cb(self, error_cb):
         pass
 
     def _send_command(self, cmd, success_cb, error_cb):
-        process = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True)
+        print(cmd)
+        process = Popen([cmd], stdout=PIPE, stderr=PIPE, shell=True)
         output, error = process.communicate()
         if error:
-            error_cb(error)
+            error_cb(str(error.decode("utf-8") ))
         else:
-            success_cb(output)
+            success_cb(str(output.decode("utf-8")))
