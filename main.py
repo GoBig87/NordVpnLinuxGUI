@@ -1,10 +1,7 @@
 from kivy.uix.anchorlayout import AnchorLayout
 from kivy.uix.floatlayout import FloatLayout
 from kivymd.app import MDApp
-from kivymd.theming import ThemeManager
-from kivymd.uix.button import MDRectangleFlatButton
 from kivy.properties import ObjectProperty
-from kivy.uix.boxlayout import BoxLayout
 from kivy.clock import Clock
 from kivy.uix.screenmanager import ScreenManager, NoTransition
 
