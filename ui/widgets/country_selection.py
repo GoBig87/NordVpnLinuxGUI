@@ -94,7 +94,7 @@ class CountrySelection(GridLayout):
         _country = country.replace("_", "-").lower()
         self.flag = f"ui/assets/images/{_country}.png"
         self.nord_client = App.get_running_app().nord_client
-        self.cites = self.nord_client.country_dict[country]
+        self.cities = self.nord_client.country_dict[country]
 
     def connect_to_country(self):
         self.nord_client.connect_to_country(self.country)
