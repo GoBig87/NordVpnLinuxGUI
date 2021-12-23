@@ -1,19 +1,30 @@
+from kivy.uix.anchorlayout import AnchorLayout
+from kivy.uix.floatlayout import FloatLayout
 from kivymd.app import MDApp
+from kivymd.theming import ThemeManager
 from kivymd.uix.button import MDRectangleFlatButton
 from kivy.properties import ObjectProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.clock import Clock
-from nord_vpn_api.nord_client import NordClient
+from kivy.uix.screenmanager import ScreenManager, NoTransition
 
+from nord_vpn_api.nord_client import NordClient
+from ui.screens.map_screen import MapScreen
 
 class MainApp(MDApp):
+    nord_client = ObjectProperty(NordClient())
+
     def build(self):
-        self.nord_client = NordClient()
-        boxlayout = BoxLayout(orientation="vertical")
-        self.login_button = MDRectangleFlatButton(text="login")
-        self.login_button.bind(on_press=self.login)
-        boxlayout.add_widget(self.login_button)
-        return boxlayout
+        self.theme_cls.theme_style = "Dark"
+        self.mainbox = FloatLayout()
+        self.screens = AnchorLayout(anchor_x='center', anchor_y='center')
+
+        self.content = ScreenManager()
+        self.content.transition = NoTransition()
+        self.content.add_widget(MapScreen())
+        self.screens.add_widget(self.content)
+        self.mainbox.add_widget(self.screens)
+        return self.mainbox
 
     def login(self, instance):
         self.nord_client.login(self.nord_client.login_success, self.login_fail)
