@@ -4,6 +4,7 @@ from kivy.properties import StringProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.lang.builder import Builder
 from kivy.uix.gridlayout import GridLayout
+from kivy.metrics import dp
 
 from ui.widgets.label_button import LabelButton
 
@@ -12,20 +13,20 @@ Builder.load_string("""
 <CitySelection>
     id: city_box
     orientation: "vertical"
-    spacing: dp(5), dp(20)
-    height: 80
+    spacing: dp(5), dp(10)
+    height: dp(50)
     BoxLayout:
         orientation: "horizontal"
         padding: dp(5), dp(7)
         Widget:
             size_hint_x: 0.2
-        LabelButton:
+        MDFlatButton:
             id: city
             size_hint_x: 0.6
             text: root.city_label
-            font_style: "Subtitle1"
-            font_size: 24
-            valign: "center"
+            theme_text_color: "Custom"
+            text_color: (1,1,1,1)
+            pos_hint: {'center_x': 0, 'center_y': .5}
         Widget:
             size_hint_x: 0.1
     MDSeparator:
@@ -37,34 +38,37 @@ Builder.load_string("""
     size_hint_y: None
     cols: 1
     BoxLayout:
-        id: country_box
-        orientation: "horizontal"
-        size_hint_x: 1
-        height: 70
-        Image:
-            source: root.flag
-            size_hint_x: 0.2
+        orientation: "vertical"
+        BoxLayout:
+            id: country_box
+            orientation: "horizontal"
+            size_hint_x: 1
+            height: dp(50)
+            Image:
+                source: root.flag
+                size_hint_x: 0.2
+                height: dp(50)
+            MDFlatButton:
+                height: dp(50)
+                size_hint_x: 0.5
+                text: root.country_label
+                theme_text_color: "Custom"
+                text_color: (1,1,1,1)
+                pos_hint: {'center_x': 0, 'center_y': .5}
+                on_release: root.connect_to_country()
+            MDIconButton:
+                id: drop_down
+                icon: "chevron-down"
+                height: dp(50)
+                pos_hint: {'center_x': .5, 'center_y': .5}
+                on_release: root.build_drop_down()
         Widget:
-            size_hint_x: 0.1
-        LabelButton:
-            size_hint_x: 0.6
-            text: root.country_label
-            font_style: "Subtitle1"
-            font_size: 24
-            valign: "center"
-            on_release: root.connect_to_country()
-        MDIconButton:
-            id: drop_down
-            icon: "chevron-down"
-            pos_hint: {'center_x': .5, 'center_y': .5}
-            on_release: root.build_drop_down()
-    Widget:
-        id: padding
-        height: 5
-    MDSeparator:
-        id: separator
-        height: 5
-        padding: dp(10),0,0,0
+            id: padding
+            height: dp(5)
+        MDSeparator:
+            id: separator
+            height: dp(1)
+            padding: dp(10),0,0,0
 """)
 
 
@@ -81,29 +85,46 @@ class CitySelection(BoxLayout):
     def connect_to_city(self):
         self.nord_client.connect_to_city(self.city)
 
+
 class CountrySelection(GridLayout):
     country_label = StringProperty("")
     flag = StringProperty("")
     drop_down_icon = StringProperty("chevron-down")
 
-    def __init__(self, country, **kwargs):
+    def __init__(self, country, dialog, **kwargs):
         super().__init__(**kwargs)
         self.expanded = False
+        self.dialog = dialog
         self.country = country
-        self.country_label = country.replace("_", "")
+        self.country_label = country.replace("_", " ")
         _country = country.replace("_", "-").lower()
         self.flag = f"ui/assets/images/{_country}.png"
         self.nord_client = App.get_running_app().nord_client
         self.cities = self.nord_client.country_dict[country]
 
     def connect_to_country(self):
-        self.nord_client.connect_to_country(self.country)
+        self.dialog.open()
+        self.nord_client.connect_to_country(self.country,
+                                            self.success_cb,
+                                            self.error_cb)
+
+    def success_cb(self, output):
+        self.dialog.info_text = "Connected"
+        Clock.schedule_interval(self.delay_dismiss, 1.5)
+
+    def error_cb(self, output):
+        self.dialog.info_text = "Failed to Connect"
+        Clock.schedule_interval(self.delay_dismiss, 1.5)
+
+    def delay_dismiss(self, dt):
+        self.dialog.dismiss
 
     def build_drop_down(self, *args):
         if not self.expanded:
             for city in self.cities:
                 self.add_widget(CitySelection(city=city))
             self.expanded = True
+            self._update_height()
         else:
             widgets_to_remove = []
             for widget in self.children:
@@ -112,10 +133,12 @@ class CountrySelection(GridLayout):
             for widget in widgets_to_remove:
                 self.remove_widget(widget)
             self.expanded = False
-        self._update_height()
+            self.height = dp(56)
+
 
     def _update_height(self):
         height = 0
         for child in self.children:
             height += child.height
         self.height = height
+

@@ -13,6 +13,7 @@ from ui.widgets.country_selection import CountrySelection
 from ui.widgets.group_selection import GroupSelection
 from ui.constants import URL
 
+
 Builder.load_string("""
 <MapScreen>
     BoxLayout:
@@ -74,6 +75,7 @@ Builder.load_string("""
         padding: dp(20), dp(20)
         MDFillRoundFlatButton:
             text: "Quick Connect"
+            on_press: root.quick_connect()
     AnchorLayout:
         anchor_x: "left"
         anchor_y: "top"
@@ -93,15 +95,16 @@ class MapScreen(Screen):
     map_source = MapSource(url=URL, image_ext="png")
     email = StringProperty("")
     search_text = StringProperty("")
+    connected = False
 
     def __init__(self, **kwargs):
         super(MapScreen, self).__init__(**kwargs)
         self.nord_client = App.get_running_app().nord_client
         self.ids.status_box.ids.login_status.ids.login_label.bind(on_press=self.handle_login)
-        self.build_server_list()
         self.login_dialog = DialogSpinner(info_text="Logging in..")
         self.login_dialog.bind(on_dismiss=self.cancel_login)
         self.connecting_dialog = DialogSpinner(info_text="Connecting..")
+        self.build_server_list()
 
     def build_server_list(self, search_text=""):
         self.ids.selection.clear_widgets()
@@ -113,20 +116,22 @@ class MapScreen(Screen):
         self.ids.selection.add_widget(label)
         for group in self.nord_client.group_list:
             if search_text:
-                if search_text in group:
-                    self.ids.selection.add_widget(GroupSelection(group=group))
+                if search_text.lower() in group.lower():
+                    self.ids.selection.add_widget(GroupSelection(group=group, dialog=self.connecting_dialog))
             else:
-                self.ids.selection.add_widget(GroupSelection(group=group))
+                self.ids.selection.add_widget(GroupSelection(group=group, dialog=self.connecting_dialog))
 
     def build_country_list(self, search_text=""):
         label = MDLabel(text="Country List", size_hint=(1, None), height=dp(50), bold=True, halign="center")
         self.ids.selection.add_widget(label)
         for country in self.nord_client.country_dict:
             if search_text:
-                if search_text in country:
-                    self.ids.selection.add_widget(CountrySelection(country=country))
+                if search_text.lower() in country.lower():
+                    self.ids.selection.add_widget(CountrySelection(country=country,
+                                                                   dialog=self.connecting_dialog))
             else:
-                self.ids.selection.add_widget(CountrySelection(country=country))
+                self.ids.selection.add_widget(CountrySelection(country=country,
+                                                               dialog=self.connecting_dialog))
 
     def handle_login(self, instance):
         self.login_dialog.open()
@@ -153,3 +158,18 @@ class MapScreen(Screen):
             self.ids.status_box.ids.login_status.login_icon = "logout"
             self.email = self.nord_client.email
             self.cancel_login()
+
+    def quick_connect(self):
+        self.connecting_dialog.open()
+        self.nord_client.quick_connect(self.quick_connect_success, self.quick_connect_error)
+
+    def quick_connect_success(self, outs):
+        self.connecting_dialog.info_text = "Connected"
+        Clock.schedule_interval(self.delay_dismiss, 1.5)
+
+    def quick_connect_error(self, outs):
+        self.connecting_dialog.info_text = "Failed to Connect"
+        Clock.schedule_interval(self.delay_dismiss, 1.5)
+
+    def delay_dismiss(self, dt):
+        self.connecting_dialog.dismiss()

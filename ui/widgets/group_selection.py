@@ -5,8 +5,6 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.lang.builder import Builder
 from kivy.uix.gridlayout import GridLayout
 
-from ui.widgets.label_button import LabelButton
-
 
 Builder.load_string("""
 <GroupSelection>
@@ -19,7 +17,7 @@ Builder.load_string("""
         id: country_box
         orientation: "horizontal"
         size_hint_x: 1
-        height: 70
+        height: dp(50)
         MDIcon:
             icon: root.group_icon
             size_hint_x: 0.2
@@ -35,10 +33,10 @@ Builder.load_string("""
         Widget:
     Widget:
         id: padding
-        height: 5
+        height: dp(5)
     MDSeparator:
         id: separator
-        height: 5
+        height: dp(1)
         padding: dp(10),0,0,0
 """)
 
@@ -47,12 +45,26 @@ class GroupSelection(GridLayout):
     group_label = StringProperty("")
     group_icon = StringProperty("chevron-down")
 
-    def __init__(self, group, **kwargs):
+    def __init__(self, group, dialog, **kwargs):
         super().__init__(**kwargs)
         self.group = group
+        self.dialog = dialog
         self.group_label = group.replace("_", " ")
         self.nord_client = App.get_running_app().nord_client
 
     def connect_to_group(self):
-        self.nord_client.connect_to_country(self.country)
+        self.dialog.open()
+        self.nord_client.connect_to_country(self.group,
+                                            self.success_cb,
+                                            self.error_cb)
 
+    def success_cb(self, output):
+        self.dialog.info_text = "Connected"
+        Clock.schedule_interval(self.delay_dismiss, 1.5)
+
+    def error_cb(self, output):
+        self.dialog.info_text = "Failed to Connect"
+        Clock.schedule_interval(self.delay_dismiss, 1.5)
+
+    def delay_dismiss(self, dt):
+        self.dialog.dismiss
