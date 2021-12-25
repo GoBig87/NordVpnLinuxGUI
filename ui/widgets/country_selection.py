@@ -76,14 +76,15 @@ class CitySelection(BoxLayout):
     city_label = StringProperty("")
     city = StringProperty("")
 
-    def __init__(self, city, **kwargs):
+    def __init__(self, city, connect, **kwargs):
         super().__init__(**kwargs)
         self.city_label = city
         self.city = city
+        self.connect = connect
         self.nord_client = App.get_running_app().nord_client
 
     def connect_to_city(self):
-        self.nord_client.connect_to_city(self.city)
+        self.connect(self.city)
 
 
 class CountrySelection(GridLayout):
@@ -91,10 +92,10 @@ class CountrySelection(GridLayout):
     flag = StringProperty("")
     drop_down_icon = StringProperty("chevron-down")
 
-    def __init__(self, country, dialog, **kwargs):
+    def __init__(self, country, connect, **kwargs):
         super().__init__(**kwargs)
         self.expanded = False
-        self.dialog = dialog
+        self.connect = connect
         self.country = country
         self.country_label = country.replace("_", " ")
         _country = country.replace("_", "-").lower()
@@ -103,26 +104,12 @@ class CountrySelection(GridLayout):
         self.cities = self.nord_client.country_dict[country]
 
     def connect_to_country(self):
-        self.dialog.open()
-        self.nord_client.connect_to_country(self.country,
-                                            self.success_cb,
-                                            self.error_cb)
-
-    def success_cb(self, output):
-        self.dialog.info_text = "Connected"
-        Clock.schedule_interval(self.delay_dismiss, 1.5)
-
-    def error_cb(self, output):
-        self.dialog.info_text = "Failed to Connect"
-        Clock.schedule_interval(self.delay_dismiss, 1.5)
-
-    def delay_dismiss(self, dt):
-        self.dialog.dismiss
+        self.connect(self.country)
 
     def build_drop_down(self, *args):
         if not self.expanded:
             for city in self.cities:
-                self.add_widget(CitySelection(city=city))
+                self.add_widget(CitySelection(city=city, connect=self.connect))
             self.expanded = True
             self._update_height()
         else:

@@ -43,26 +43,12 @@ class GroupSelection(GridLayout):
     group_label = StringProperty("")
     group_icon = StringProperty("chevron-down")
 
-    def __init__(self, group, dialog, **kwargs):
+    def __init__(self, group, connect, **kwargs):
         super().__init__(**kwargs)
         self.group = group
-        self.dialog = dialog
+        self.connect = connect
         self.group_label = group.replace("_", " ")
         self.nord_client = App.get_running_app().nord_client
 
     def connect_to_group(self):
-        self.dialog.open()
-        self.nord_client.connect_to_country(self.group,
-                                            self.success_cb,
-                                            self.error_cb)
-
-    def success_cb(self, output):
-        self.dialog.info_text = "Connected"
-        Clock.schedule_interval(self.delay_dismiss, 1.5)
-
-    def error_cb(self, output):
-        self.dialog.info_text = "Failed to Connect"
-        Clock.schedule_interval(self.delay_dismiss, 1.5)
-
-    def delay_dismiss(self, dt):
-        self.dialog.dismiss
+        self.connect(self.group)

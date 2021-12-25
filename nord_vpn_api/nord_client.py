@@ -120,6 +120,10 @@ class NordClient(object):
         if "You are not logged in." not in output:
             self.logged_in = True
 
+    def connect(self, selection, success_cb, error_cb):
+        cmd = f"{self._base_cmd} {self._connect} {selection}"
+        self._send_command(cmd, success_cb, error_cb)
+
     def connect_to_country(self, country, success_cb, error_cb):
         cmd = f"{self._base_cmd} {self._connect} {country}"
         self._send_command(cmd, success_cb, error_cb)

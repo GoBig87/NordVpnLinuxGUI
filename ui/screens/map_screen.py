@@ -128,9 +128,9 @@ class MapScreen(Screen):
         for group in self.nord_client.group_list:
             if search_text:
                 if search_text.lower() in group.lower():
-                    self.ids.selection.add_widget(GroupSelection(group=group, dialog=self.connecting_dialog))
+                    self.ids.selection.add_widget(GroupSelection(group=group, connect=self.connect))
             else:
-                self.ids.selection.add_widget(GroupSelection(group=group, dialog=self.connecting_dialog))
+                self.ids.selection.add_widget(GroupSelection(group=group, connect=self.connect))
 
     def build_country_list(self, search_text=""):
         label = MDLabel(text="Country List", size_hint=(1, None), height=dp(50), bold=True, halign="center")
@@ -139,10 +139,10 @@ class MapScreen(Screen):
             if search_text:
                 if search_text.lower() in country.lower():
                     self.ids.selection.add_widget(CountrySelection(country=country,
-                                                                   dialog=self.connecting_dialog))
+                                                                   connect=self.connect))
             else:
                 self.ids.selection.add_widget(CountrySelection(country=country,
-                                                               dialog=self.connecting_dialog))
+                                                               connect=self.connect))
 
     def handle_login(self, *args):
         if self.email:
@@ -212,26 +212,40 @@ class MapScreen(Screen):
         self.connection = "Quick Connect"
         self.quick_connect_thread = Thread(target=self.quick_connect)
 
+    def connect(self, selection):
+        print("callback hit")
+        self.connecting_dialog.info_text = "Connecting"
+        self.connecting_dialog.open()
+        self.connect_thread = Thread(target=self._connect, args=(selection,))
+        self.connect_thread.start()
+
+    def _connect(self, *args):
+        selection = args[0]
+        print(f"starting thread with: {selection}")
+        self.nord_client.connect(selection, self.connect_success, self.connect_error)
+
     def quick_connect(self):
         if self.connection == "Log in":
             self.handle_login()
         elif self.connection == "Quick Connect":
             self.connecting_dialog.info_text = "Connecting"
             self.connecting_dialog.open()
-            self.nord_client.quick_connect(self.quick_connect_success, self.quick_connect_error)
+            self.nord_client.quick_connect(self.connect_success, self.connect_error)
         elif self.connection == "Disconnect":
             self.connecting_dialog.info_text = "Disconnecting"
             self.connecting_dialog.open()
             self.nord_client.disconnect(self.disconnect_success, self.disconnect_error)
 
-    def quick_connect_success(self, outs):
+    def connect_success(self, outs):
+        print("connect success")
         self.connecting_dialog.info_text = "Connected"
         self.connection = "Disconnect"
         self.nord_client.get_status()
         self.update_connected()
         Clock.schedule_once(self.delay_dismiss, 1.5)
 
-    def quick_connect_error(self, outs):
+    def connect_error(self, outs):
+        print("failed to connect")
         self.connecting_dialog.info_text = "Failed to Connect"
         Clock.schedule_once(self.delay_dismiss, 1.5)
 
