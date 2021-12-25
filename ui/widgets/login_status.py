@@ -37,6 +37,10 @@ class LoginStatus(BoxLayout):
     def __init__(self, **kwargs):
         super(LoginStatus, self).__init__(**kwargs)
 
-    def handle_login(self):
-        '''Override in parent'''
-        pass
+    def set_logged_out(self):
+        self.login_text = "Login"
+        self.login_icon = "login"
+
+    def set_logged_in(self):
+        self.login_text = "Log out"
+        self.login_icon = "logout"

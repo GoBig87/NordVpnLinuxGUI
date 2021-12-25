@@ -24,23 +24,11 @@ Builder.load_string("""
         font_size: 28
         valign: "center"
         halign: "center"
-    MDLabel:
-        id: number_label
-        size_hint_x: 0.25
-        text: root.location_number
-        font_style: "Subtitle1"
-        font_size: 28
-        valign: "center"
 """)
 
 
 class LocationStatus(BoxLayout):
-    location_label = StringProperty("Mexico")
-    location_number = StringProperty("#51")
+    location_label = StringProperty("")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-
-    def update_locaation(self, location, number):
-        self.location_label = location
-        self.location_number = number

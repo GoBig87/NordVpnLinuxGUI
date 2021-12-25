@@ -20,10 +20,12 @@ Builder.load_string("""
     orientation: "horizontal"
     padding: 0, dp(8)
     ProtectionStatus:
+        id: protection_status
     MDSeparator:
         size_hint_x: 0.01
         orientation: "vertical"
     LocationStatus:
+        id: location_status
     MDSeparator:
         size_hint_x: 0.01
         orientation: "vertical"

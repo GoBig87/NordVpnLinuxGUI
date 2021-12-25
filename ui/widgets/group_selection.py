@@ -9,28 +9,26 @@ from kivy.uix.gridlayout import GridLayout
 Builder.load_string("""
 <GroupSelection>
     id: country_selection
-    height: root.height
+    height: dp(60)
     padding: dp(5), dp(7)
     size_hint_y: None
     cols: 1
     BoxLayout:
         id: country_box
         orientation: "horizontal"
-        size_hint_x: 1
-        height: dp(50)
         MDIcon:
             icon: root.group_icon
             size_hint_x: 0.2
-        Widget:
-            size_hint_x: 0.1
-        LabelButton:
-            size_hint_x: 0.6
-            text: root.group_label
-            font_style: "Subtitle1"
-            font_size: 24
-            valign: "center"
-            on_release: root.connect_to_group()
-        Widget:
+        BoxLayout:
+            orientation: "horizontal"
+            Widget:
+            MDFlatButton:
+                text: root.group_label
+                theme_text_color: "Custom"
+                text_color: (1,1,1,1)
+                pos_hint: {'center_x': 0, 'center_y': .5}
+                on_release: root.connect_to_group()
+            Widget:
     Widget:
         id: padding
         height: dp(5)

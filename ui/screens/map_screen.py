@@ -1,11 +1,13 @@
 from kivy.properties import ObjectProperty, StringProperty
-from kivy.clock import Clock
+from kivy.clock import Clock, mainthread
 from kivy.uix.screenmanager import Screen
 from kivy.lang.builder import Builder
 from kivy_garden.mapview import MapView, MapSource
 from kivy.app import App
 from kivymd.uix.label import MDLabel
 from kivy.metrics import dp
+
+from threading import Thread
 
 from ui.widgets.dialog_spinner import DialogSpinner
 from ui.widgets.status_box import StatusBox
@@ -74,8 +76,8 @@ Builder.load_string("""
         anchor_y: "bottom"
         padding: dp(20), dp(20)
         MDFillRoundFlatButton:
-            text: "Quick Connect"
-            on_press: root.quick_connect()
+            text: root.connection
+            on_press: root.quick_connect_thread.start()
     AnchorLayout:
         anchor_x: "left"
         anchor_y: "top"
@@ -94,8 +96,9 @@ class MapWidget(MapView):
 class MapScreen(Screen):
     map_source = MapSource(url=URL, image_ext="png")
     email = StringProperty("")
+    country = StringProperty("Disconnected")
     search_text = StringProperty("")
-    connected = False
+    connection = StringProperty("Log in")
 
     def __init__(self, **kwargs):
         super(MapScreen, self).__init__(**kwargs)
@@ -104,7 +107,15 @@ class MapScreen(Screen):
         self.login_dialog = DialogSpinner(info_text="Logging in..")
         self.login_dialog.bind(on_dismiss=self.cancel_login)
         self.connecting_dialog = DialogSpinner(info_text="Connecting..")
+        self.ids.status_box.ids.location_status.location_label = self.country
+        if self.nord_client.email:
+            self.update_login()
+        if self.nord_client.status_dict.get("Country"):
+            self.update_connected()
         self.build_server_list()
+
+        # build threads
+        self.quick_connect_thread = Thread(target=self.quick_connect)
 
     def build_server_list(self, search_text=""):
         self.ids.selection.clear_widgets()
@@ -133,14 +144,16 @@ class MapScreen(Screen):
                 self.ids.selection.add_widget(CountrySelection(country=country,
                                                                dialog=self.connecting_dialog))
 
-    def handle_login(self, instance):
-        self.login_dialog.open()
-        self.nord_client.login(self.nord_client.login_success, self.login_fail)
-        self.account_check_timer = Clock.schedule_interval(self.account_check, 1)
+    def handle_login(self, *args):
+        if self.email:
+            self.nord_client.logout(self.logout_success, self.logout_error)
+        else:
+            self.login_dialog.open()
+            self.nord_client.login(self.nord_client.login_success, self.login_fail)
+            self.account_check_timer = Clock.schedule_interval(self.account_check, 1)
 
-    def cancel_login(self):
+    def cancel_login(self, *args):
         self.account_check_timer.cancel()
-        self.login_dialog.dismiss()
 
     def logged_in(self, output):
         self.login_button.text = "Logging in..."
@@ -148,28 +161,92 @@ class MapScreen(Screen):
     def login_fail(self, output):
         self.login_dialog.info_text = "Login failed"
 
+    def logout_success(self, output):
+        # Warning order matters here
+        self.nord_client.get_account_info()
+        self.nord_client.get_status()
+        self.updated_disconnected()
+        self.update_logout()
+
+    def logout_error(self, output):
+        self.login_dialog.info_text = "Login failed"
+
+    @mainthread
+    def update_login(self):
+        self.email = self.nord_client.email
+        self.ids.status_box.ids.login_status.set_logged_in()
+        self.connection = "Quick Connect"
+        self.quick_connect_thread = Thread(target=self.quick_connect)
+
+    @mainthread
+    def update_logout(self):
+        self.email = ""
+        self.ids.status_box.ids.login_status.set_logged_out()
+        self.connection = "Log in"
+        self.quick_connect_thread = Thread(target=self.quick_connect)
+
     def account_check(self, dt):
         print("Checking account....")
         if not self.nord_client.logged_in:
             print("not logged in...")
             self.nord_client.account(self.nord_client.check_login, self.login_fail)
         else:
-            self.ids.status_box.ids.login_status.login_text = "Logged In"
-            self.ids.status_box.ids.login_status.login_icon = "logout"
-            self.email = self.nord_client.email
-            self.cancel_login()
+            self.nord_client.get_account_info()
+            self.update_login()
+            self.account_check_timer.cancel()
+            Clock.schedule_once(self.delay_dismiss, 1.5)
+
+    @mainthread
+    def update_connected(self):
+        self.country = self.nord_client.status_dict["Country"]
+        self.ids.status_box.ids.location_status.location_label = self.country
+        self.ids.status_box.ids.protection_status.set_protected()
+        self.connection = "Disconnect"
+        self.quick_connect_thread = Thread(target=self.quick_connect)
+
+    @mainthread
+    def updated_disconnected(self):
+        self.country = "Disconnected"
+        self.ids.status_box.ids.location_status.location_label = self.country
+        self.ids.status_box.ids.protection_status.set_unprotected()
+        self.connection = "Quick Connect"
+        self.quick_connect_thread = Thread(target=self.quick_connect)
 
     def quick_connect(self):
-        self.connecting_dialog.open()
-        self.nord_client.quick_connect(self.quick_connect_success, self.quick_connect_error)
+        if self.connection == "Log in":
+            self.handle_login()
+        elif self.connection == "Quick Connect":
+            self.connecting_dialog.info_text = "Connecting"
+            self.connecting_dialog.open()
+            self.nord_client.quick_connect(self.quick_connect_success, self.quick_connect_error)
+        elif self.connection == "Disconnect":
+            self.connecting_dialog.info_text = "Disconnecting"
+            self.connecting_dialog.open()
+            self.nord_client.disconnect(self.disconnect_success, self.disconnect_error)
 
     def quick_connect_success(self, outs):
         self.connecting_dialog.info_text = "Connected"
-        Clock.schedule_interval(self.delay_dismiss, 1.5)
+        self.connection = "Disconnect"
+        self.nord_client.get_status()
+        self.update_connected()
+        Clock.schedule_once(self.delay_dismiss, 1.5)
 
     def quick_connect_error(self, outs):
         self.connecting_dialog.info_text = "Failed to Connect"
-        Clock.schedule_interval(self.delay_dismiss, 1.5)
+        Clock.schedule_once(self.delay_dismiss, 1.5)
 
+    def disconnect_success(self, outs):
+        self.connecting_dialog.info_text = "Disconnected"
+        self.connection = "Quick Connect"
+        self.nord_client.get_status()
+        self.updated_disconnected()
+        Clock.schedule_once(self.delay_dismiss, 1.5)
+
+    def disconnect_error(self, outs):
+        self.connecting_dialog.info_text = "Failed to Connect"
+        Clock.schedule_once(self.delay_dismiss, 1.5)
+
+    @mainthread
     def delay_dismiss(self, dt):
         self.connecting_dialog.dismiss()
+        self.login_dialog.dismiss()

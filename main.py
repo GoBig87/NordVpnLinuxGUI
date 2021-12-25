@@ -1,6 +1,6 @@
-# from kivy.config import Config
-# Config.set('graphics', 'width', '1400')
-# Config.set('graphics', 'height', '900')
+from kivy.config import Config
+Config.set('graphics', 'width', '1200')
+Config.set('graphics', 'height', '800')
 
 from kivy.uix.anchorlayout import AnchorLayout
 from kivy.uix.floatlayout import FloatLayout
