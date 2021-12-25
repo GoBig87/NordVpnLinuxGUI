@@ -1,3 +1,4 @@
+from kivy.properties import ObjectProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.lang.builder import Builder
 
@@ -5,7 +6,7 @@ from kivymd.uix.card import MDSeparator
 
 from ui.widgets.proctection_status import ProtectionStatus
 from ui.widgets.location_status import LocationStatus
-from ui.widgets.help_status import HelpStatus
+from ui.widgets.login_status import LoginStatus
 
 
 Builder.load_string("""
@@ -26,7 +27,8 @@ Builder.load_string("""
     MDSeparator:
         size_hint_x: 0.01
         orientation: "vertical"
-    HelpStatus:
+    LoginStatus:
+        id: login_status
 """)
 
 
