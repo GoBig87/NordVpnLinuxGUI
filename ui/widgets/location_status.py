@@ -21,7 +21,7 @@ Builder.load_string("""
         id: location_label
         text: root.location_label
         font_style: "Subtitle1"
-        font_size: 28
+        font_size: 24
         valign: "center"
         halign: "center"
 """)

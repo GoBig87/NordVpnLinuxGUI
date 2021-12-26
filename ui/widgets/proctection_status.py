@@ -11,20 +11,24 @@ Builder.load_string("""
     id: protection_status
     orientation: "horizontal"
     padding: dp(10), dp(10)
-    MDIcon:
-        id: alert_icon
-        icon: root.icon
-        size_hint_x: 0.3
-        font_size: 40
-        color: root.protection_color
-        valign: "center"
-    MDLabel:
-        id: alert_label
-        text: root.label_text
-        font_style: "Subtitle1"
-        font_size: 24
-        color: root.protection_color
-        valign: "center"
+    Widget:
+        size_hint_x: 0.1
+    BoxLayout:
+        orientation: "horizontal"
+        MDIcon:
+            id: alert_icon
+            icon: root.icon
+            size_hint_x: 0.3
+            font_size: 40
+            color: root.protection_color
+            valign: "center"
+        MDLabel:
+            id: alert_label
+            text: root.label_text
+            font_style: "Subtitle1"
+            font_size: 24
+            color: root.protection_color
+            valign: "center"
 """)
 
 

@@ -19,7 +19,7 @@ Builder.load_string("""
         height: self.minimum_height
         elevation: 24
         height: dp(50)
-        width: dp(200)
+        width: dp(325)
         padding: "12dp", "12dp", "8dp", "8dp"
         radius: root.radius
         md_bg_color:
@@ -55,14 +55,14 @@ class DialogSpinner(BaseDialog):
         Window.bind(on_resize=self.update_width)
 
         self.size_hint = (None, None)
-        self.width = dp(250)
+        self.width = dp(325)
 
         update_height = False
         if update_height:
             Clock.schedule_once(self.update_height)
 
     def update_width(self, *args):
-        self.width = dp(250)
+        self.width = dp(325)
 
     def update_height(self, *args):
         self._spacer_top = self.content_cls.height + dp(24)

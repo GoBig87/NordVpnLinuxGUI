@@ -27,6 +27,7 @@ Builder.load_string("""
             theme_text_color: "Custom"
             text_color: (1,1,1,1)
             pos_hint: {'center_x': 0, 'center_y': .5}
+            on_release: root.connect_to_city()
         Widget:
             size_hint_x: 0.1
     MDSeparator:
@@ -84,6 +85,7 @@ class CitySelection(BoxLayout):
         self.nord_client = App.get_running_app().nord_client
 
     def connect_to_city(self):
+        print("got here city hit")
         self.connect(self.city)
 
 

@@ -1,4 +1,5 @@
 from subprocess import Popen, PIPE
+from threading import Thread
 import webbrowser
 
 
@@ -31,27 +32,40 @@ class NordClient(object):
         self._whitelist = "whitelist"
         self._help = "help"
         self._version = "version"
-        self._build_country_dict()
-        self._build_groups()
+        self.get_countries()
+        self.get_groups()
         self.get_settings()
         self.get_account_info()
         self.get_status()
         self.get_version()
 
-    def _build_groups(self):
-        cmd = f"{self._base_cmd} {self._groups}"
-        self._send_command(cmd, self._build_groups_resp, self._base_error_cb)
+    def _setup_thread(self, cmd, succes_cb, error_cb):
+        thread = None
+        if succes_cb:
+            thread = Thread(target=self._send_command, args=(cmd, succes_cb, error_cb))
+        return thread
 
-    def _build_groups_resp(self, output):
+    def get_groups(self, success_cb=None, error_cb=None):
+        cmd = f"{self._base_cmd} {self._groups}"
+        thread = self._setup_thread(cmd, success_cb, error_cb)
+        if thread:
+            return thread.start()
+        self._send_command(cmd, self.get_groups_resp, self._base_error_cb)
+
+    def get_groups_resp(self, output):
         group_list = output.replace(",", "").split()
         group_list = list(filter(('-').__ne__, group_list))
         self.group_list = group_list
+        return group_list
 
-    def _build_country_dict(self):
+    def get_countries(self, success_cb=None, error_cb=None):
         cmd = f"{self._base_cmd} {self._countries}"
-        self._send_command(cmd, self._build_country_dict_resp, self._base_cmd)
+        thread = self._setup_thread(cmd, success_cb, error_cb)
+        if thread:
+            return thread.start()
+        self._send_command(cmd, self.get_countries_resp, self._base_error_cb)
 
-    def _build_country_dict_resp(self, output):
+    def get_countries_resp(self, output):
         country_list = output.replace(",", "").split()
         country_list = list(filter(('-').__ne__, country_list))
         for country in country_list:
@@ -59,19 +73,27 @@ class NordClient(object):
             outs, err = self._send_dir_command(cmd)
             city_list = []
             if outs:
-                city_list = outs.split()
+                city_list = outs.replace(",", "").split()
             city_list = list(filter(('-').__ne__, city_list))
             self.country_dict[country] = city_list
+        return self.country_dict
 
-    def get_version(self):
+    def get_version(self, success_cb=None, error_cb=None):
         cmd = f"{self._base_cmd} {self._version}"
+        thread = self._setup_thread(cmd, success_cb, error_cb)
+        if thread:
+            return thread.start()
         self._send_command(cmd, self.get_version_resp, self._base_error_cb)
 
     def get_version_resp(self, output):
         self.version = output
+        return self.version
 
-    def get_status(self):
+    def get_status(self, success_cb=None, error_cb=None):
         cmd = f"{self._base_cmd} {self._status}"
+        thread = self._setup_thread(cmd, success_cb, error_cb)
+        if thread:
+            return thread.start()
         self._send_command(cmd, self.get_status_resp, self._base_error_cb)
 
     def get_status_resp(self, output):
@@ -82,9 +104,13 @@ class NordClient(object):
                 key_list = key.split()
                 key_list = list(filter(('-').__ne__, key_list))
                 self.status_dict[key_list[0]] = value
+        return self.settings_dict
 
-    def get_settings(self):
+    def get_settings(self, success_cb=None, error_cb=None):
         cmd = f"{self._base_cmd} {self._settings}"
+        thread = self._setup_thread(cmd, success_cb, error_cb)
+        if thread:
+            return thread.start()
         self._send_command(cmd, self.get_settings_resp, self._base_error_cb)
 
     def get_settings_resp(self, output):
@@ -95,12 +121,20 @@ class NordClient(object):
                 key_list = key.split()
                 key_list = list(filter(('-').__ne__, key_list))
                 self.settings_dict[key_list[0]] = value
+        return self.settings_dict
 
-    def get_account_info(self):
+    def get_account_info(self, success_cb=None, error_cb=None):
         cmd = f"{self._base_cmd} {self._account}"
-        self._send_command(cmd, self._parse_account_rsp, self._base_error_cb)
+        thread = self._setup_thread(cmd, success_cb, error_cb)
+        if thread:
+            return thread.start()
+        self._send_command(cmd, self.get_account_rsp, self._base_error_cb)
 
-    def _parse_account_rsp(self, output):
+    def get_account_rsp(self, output):
+        if "You are not logged in." not in output:
+            self.logged_in = True
+        else:
+            return None, None, None
         try:
             rsp_list = output.split("\n")
             self.account_information = rsp_list[0].split("Account Information:")[-1]
@@ -110,43 +144,71 @@ class NordClient(object):
             self.account_information = ""
             self.email = ""
             self.vpn_service = ""
+        return self.account_information, self.email, self.vpn_service
 
-    def account(self, success_cb, error_cb):
-        cmd = f"{self._base_cmd} {self._account}"
-        self._send_command(cmd, success_cb, error_cb)
+    # def check_login(self, output):
+    #     print(output)
+    #     if "You are not logged in." not in output:
+    #         self.logged_in = True
 
-    def check_login(self, output):
-        print(output)
-        if "You are not logged in." not in output:
-            self.logged_in = True
-
-    def connect(self, selection, success_cb, error_cb):
+    def connect(self, selection, success_cb=None, error_cb=None):
         cmd = f"{self._base_cmd} {self._connect} {selection}"
-        self._send_command(cmd, success_cb, error_cb)
+        thread = self._setup_thread(cmd, success_cb, error_cb)
+        if thread:
+            return thread.start()
+        self._send_command(cmd, self.connect_rsp, self._base_error_cb)
+
+    def connect_rsp(self, output):
+        pass
 
     def connect_to_country(self, country, success_cb, error_cb):
         cmd = f"{self._base_cmd} {self._connect} {country}"
-        self._send_command(cmd, success_cb, error_cb)
+        thread = self._setup_thread(cmd, success_cb, error_cb)
+        if thread:
+            return thread.start()
+        self._send_command(cmd, self.connect_rsp, self._base_error_cb)
 
     def connect_to_city(self, city, success_cb, error_cb):
         cmd = f"{self._base_cmd} {self._connect} {city}"
-        self._send_command(cmd, success_cb, error_cb)
+        thread = self._setup_thread(cmd, success_cb, error_cb)
+        if thread:
+            return thread.start()
+        self._send_command(cmd, self.connect_rsp, self._base_error_cb)
 
     def quick_connect(self, success_cb, error_cb):
         cmd = f"{self._base_cmd} {self._connect}"
-        self._send_command(cmd, success_cb, error_cb)
+        thread = self._setup_thread(cmd, success_cb, error_cb)
+        if thread:
+            return thread.start()
+        self._send_command(cmd, self.connect_rsp, self._base_error_cb)
 
     def disconnect(self, success_cb, error_cb):
         cmd = f"{self._base_cmd} {self._disconnect}"
-        self._send_command(cmd, success_cb, error_cb)
+        thread = self._setup_thread(cmd, success_cb, error_cb)
+        if thread:
+            return thread.start()
+        self._send_command(cmd, self.disconnect_rsp, self._base_error_cb)
+
+    def disconnect_rsp(self, output):
+        pass
 
     def login(self, success_cb, error_cb):
         cmd = f"{self._base_cmd} {self._login}"
-        self._send_command(cmd, success_cb, error_cb)
+        thread = self._setup_thread(cmd, success_cb, error_cb)
+        if thread:
+            return thread.start()
+        self._send_command(cmd, self.login_success, self._base_error_cb)
+
+    def login_rsp(self, output):
+        if "You are not logged in." not in output:
+                self.logged_in = True
 
     def logout(self, success_cb, error_cb):
         cmd = f"{self._base_cmd} {self._logout}"
-        self._send_command(cmd, success_cb, error_cb)
+        thread = self._setup_thread(cmd, success_cb, error_cb)
+        if thread:
+            return thread.start()
+        self._send_command(cmd, self.login_rsp, self._base_error_cb)
 
     def login_success(self, output):
         print(output)
@@ -169,8 +231,10 @@ class NordClient(object):
         output, error = process.communicate()
         return output.decode("utf-8"), error.decode("utf-8")
 
-    def _send_command(self, cmd, success_cb, error_cb):
-        print(cmd)
+    def _send_command(self, *args):
+        cmd = args[0]
+        success_cb = args[1]
+        error_cb = args[2]
         process = Popen([cmd], stdout=PIPE, stderr=PIPE, shell=True)
         output, error = process.communicate()
         if error:

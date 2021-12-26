@@ -2,12 +2,11 @@ from kivy.properties import ObjectProperty, StringProperty
 from kivy.clock import Clock, mainthread
 from kivy.uix.screenmanager import Screen
 from kivy.lang.builder import Builder
-from kivy_garden.mapview import MapView, MapSource
+from kivy_garden.mapview import MapView, MapSource, MapMarker
 from kivy.app import App
 from kivymd.uix.label import MDLabel
 from kivy.metrics import dp
-
-from threading import Thread
+from kivy.network.urlrequest import UrlRequest
 
 from ui.widgets.dialog_spinner import DialogSpinner
 from ui.widgets.status_box import StatusBox
@@ -30,16 +29,12 @@ Builder.load_string("""
                 Widget:
             StatusBox:
                 id: status_box
-                size_hint_x: 0.6
+                size_hint_x: 0.7
             BoxLayout:
                 orientation: "vertical"
                 padding: dp(10), dp(10)
                 size_hint_x: 0.2
-                MDLabel:
-                    text: root.email
-                    font_style: "Subtitle1"
-                    font_size: 18
-                    bold: True
+                Widget:
         BoxLayout:
             orientation: "horizontal"
             size_hint_y: 0.9
@@ -68,6 +63,7 @@ Builder.load_string("""
                     anchor_x: "center"
                     anchor_y: "center"
                     MapWidget:
+                        id: map
                         zoom: 4
                         lat: 38.6394
                         lon: -100.057
@@ -77,13 +73,19 @@ Builder.load_string("""
         padding: dp(20), dp(20)
         MDFillRoundFlatButton:
             text: root.connection
-            on_press: root.quick_connect_thread.start()
+            on_press: root.quick_connect()
     AnchorLayout:
         anchor_x: "left"
         anchor_y: "top"
-        padding: dp(5), dp(5)
+        padding: dp(10), dp(10)
         MDIconButton:
-            icon: "cog"     
+            icon: "cog"
+    AnchorLayout:
+        anchor_x: "right"
+        anchor_y: "top"
+        padding: dp(10), dp(15)
+        MDIconButton:
+            icon: "information-outline"
 """)
 
 
@@ -91,6 +93,26 @@ class MapWidget(MapView):
     def __init__(self, **kwargs):
         super(MapWidget, self).__init__(**kwargs)
         self.map_source = MapSource(url=URL, image_ext="png")
+        self.marker = MapMarker(keep_ratio=True,
+                                allow_stretch=True,
+                                size_hint_y=None,
+                                size_hint_x=None,
+                                height=50)
+        self.marker.source = "ui/assets/images/marker.png"
+        self.marker.lat = 38.6394
+        self.marker.lat = -100.057
+        self.marker.height = 60
+        self.marker.width = 40
+        self.add_marker(self.marker)
+
+    def on_touch_down(self, touch):
+        pass
+
+    def on_touch_up(self, touch):
+        pass
+
+    def on_touch_move(self, touch):
+        pass
 
 
 class MapScreen(Screen):
@@ -103,7 +125,7 @@ class MapScreen(Screen):
     def __init__(self, **kwargs):
         super(MapScreen, self).__init__(**kwargs)
         self.nord_client = App.get_running_app().nord_client
-        self.ids.status_box.ids.login_status.ids.login_label.bind(on_press=self.handle_login)
+        self.ids.status_box.ids.login_status.bind(on_press=self.handle_login)
         self.login_dialog = DialogSpinner(info_text="Logging in..")
         self.login_dialog.bind(on_dismiss=self.cancel_login)
         self.connecting_dialog = DialogSpinner(info_text="Connecting..")
@@ -113,9 +135,7 @@ class MapScreen(Screen):
         if self.nord_client.status_dict.get("Country"):
             self.update_connected()
         self.build_server_list()
-
-        # build threads
-        self.quick_connect_thread = Thread(target=self.quick_connect)
+        self.update_gps_location()
 
     def build_server_list(self, search_text=""):
         self.ids.selection.clear_widgets()
@@ -174,22 +194,20 @@ class MapScreen(Screen):
     @mainthread
     def update_login(self):
         self.email = self.nord_client.email
-        self.ids.status_box.ids.login_status.set_logged_in()
+        self.ids.status_box.ids.login_status.set_logged_in(self.email)
         self.connection = "Quick Connect"
-        self.quick_connect_thread = Thread(target=self.quick_connect)
 
     @mainthread
     def update_logout(self):
         self.email = ""
         self.ids.status_box.ids.login_status.set_logged_out()
         self.connection = "Log in"
-        self.quick_connect_thread = Thread(target=self.quick_connect)
 
     def account_check(self, dt):
         print("Checking account....")
         if not self.nord_client.logged_in:
             print("not logged in...")
-            self.nord_client.account(self.nord_client.check_login, self.login_fail)
+            self.nord_client.get_account_info()
         else:
             self.nord_client.get_account_info()
             self.update_login()
@@ -202,7 +220,6 @@ class MapScreen(Screen):
         self.ids.status_box.ids.location_status.location_label = self.country
         self.ids.status_box.ids.protection_status.set_protected()
         self.connection = "Disconnect"
-        self.quick_connect_thread = Thread(target=self.quick_connect)
 
     @mainthread
     def updated_disconnected(self):
@@ -210,18 +227,11 @@ class MapScreen(Screen):
         self.ids.status_box.ids.location_status.location_label = self.country
         self.ids.status_box.ids.protection_status.set_unprotected()
         self.connection = "Quick Connect"
-        self.quick_connect_thread = Thread(target=self.quick_connect)
 
     def connect(self, selection):
         print("callback hit")
         self.connecting_dialog.info_text = "Connecting"
         self.connecting_dialog.open()
-        self.connect_thread = Thread(target=self._connect, args=(selection,))
-        self.connect_thread.start()
-
-    def _connect(self, *args):
-        selection = args[0]
-        print(f"starting thread with: {selection}")
         self.nord_client.connect(selection, self.connect_success, self.connect_error)
 
     def quick_connect(self):
@@ -242,6 +252,7 @@ class MapScreen(Screen):
         self.connection = "Disconnect"
         self.nord_client.get_status()
         self.update_connected()
+        self.update_gps_location()
         Clock.schedule_once(self.delay_dismiss, 1.5)
 
     def connect_error(self, outs):
@@ -264,3 +275,19 @@ class MapScreen(Screen):
     def delay_dismiss(self, dt):
         self.connecting_dialog.dismiss()
         self.login_dialog.dismiss()
+
+    def update_gps_location(self):
+        url = 'http://ipinfo.io/json'
+        UrlRequest(url,
+                   on_success=self.location_success,
+                   on_error=self.location_error)
+
+    def location_success(self, req, result):
+        loc = result.get("loc")
+        lat, lon = loc.replace(" ", "").split(",")
+        self.ids.map.marker.lat = float(lat)
+        self.ids.map.marker.lon = float(lon)
+        self.ids.map.center_on(float(lat), float(lon))
+
+    def location_error(self, req, result):
+        pass
