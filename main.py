@@ -11,6 +11,7 @@ from kivy.uix.screenmanager import ScreenManager, NoTransition
 
 from nord_vpn_api.nord_client import NordClient
 from ui.screens.map_screen import MapScreen
+from ui.screens.settings_screen import SettingsScreen
 
 
 class MainApp(MDApp):
@@ -23,7 +24,9 @@ class MainApp(MDApp):
 
         self.content = ScreenManager()
         self.content.transition = NoTransition()
-        self.content.add_widget(MapScreen())
+        #self.content.add_widget(SettingsScreen())
+        self.content.add_widget(MapScreen(name="map"))
+        self.content.add_widget(SettingsScreen(name="settings"))
         self.screens.add_widget(self.content)
         self.mainbox.add_widget(self.screens)
         return self.mainbox

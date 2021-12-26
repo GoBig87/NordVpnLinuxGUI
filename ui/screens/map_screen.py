@@ -19,9 +19,10 @@ Builder.load_string("""
 <MapScreen>
     BoxLayout:
         orientation: "vertical"
-        BoxLayout:
+        MDCard:
             orientation: "horizontal"
-            size_hint_y: 0.1
+            size_hint_y: None
+            height: dp(60)
             padding: 0, dp(10)
             BoxLayout:
                 orientation: "horizontal"
@@ -38,7 +39,7 @@ Builder.load_string("""
         BoxLayout:
             orientation: "horizontal"
             size_hint_y: 0.9
-            BoxLayout:
+            MDCard:
                 orientation: "vertical"
                 size_hint_x: 0.4
                 MDBoxLayout:
@@ -80,6 +81,7 @@ Builder.load_string("""
         padding: dp(10), dp(10)
         MDIconButton:
             icon: "cog"
+            on_press: root.switch_screen()  
     AnchorLayout:
         anchor_x: "right"
         anchor_y: "top"
@@ -291,3 +293,6 @@ class MapScreen(Screen):
 
     def location_error(self, req, result):
         pass
+
+    def switch_screen(self):
+        App.get_running_app().content.current = "settings"
