@@ -173,7 +173,7 @@ class MapScreen(Screen):
         country_dict = self.nord_client.country_dict
         for country in iter(sorted(country_dict.items())):
             if search_text:
-                if search_text.lower() in country.lower():
+                if search_text.lower() in country[0].lower():
                     self.ids.selection.add_widget(CountrySelection(country=country[0],
                                                                    connect=self.connect))
             else:
