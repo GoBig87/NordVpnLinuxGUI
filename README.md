@@ -18,8 +18,6 @@ through a terminal in source code directory after running the installation scrip
 
 # Using
 Login through the app to launch a web browser which validates your credentials and gives you access to NordVPN servers
-![NordVPNLinuxGUI](https://user-images.githubusercontent.com/39137894/147497883-acba88e9-e7a7-48b1-b735-48e7bd78632e.gif)
-
 ![Screenshot from 2021-12-27 10-03-27](https://user-images.githubusercontent.com/39137894/147496843-a950e90c-da1f-4383-b486-5dd008bbb2f4.png)
 
 Search countries that you wish to connect to
