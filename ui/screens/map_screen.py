@@ -170,13 +170,14 @@ class MapScreen(Screen):
                         padding=(dp(29), 0),
                         halign="left")
         self.ids.selection.add_widget(label)
-        for country in self.nord_client.country_dict:
+        country_dict = self.nord_client.country_dict
+        for country in iter(sorted(country_dict.items())):
             if search_text:
                 if search_text.lower() in country.lower():
-                    self.ids.selection.add_widget(CountrySelection(country=country,
+                    self.ids.selection.add_widget(CountrySelection(country=country[0],
                                                                    connect=self.connect))
             else:
-                self.ids.selection.add_widget(CountrySelection(country=country,
+                self.ids.selection.add_widget(CountrySelection(country=country[0],
                                                                connect=self.connect))
 
     def handle_login(self, *args):
