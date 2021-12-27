@@ -1,3 +1,4 @@
+#!/bin/bash
 # Install nordvpn
 sudo usermod -aG nordvpn $USER
 sh <(curl -sSf https://downloads.nordcdn.com/apps/linux/install.sh)
@@ -17,4 +18,26 @@ python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 
+echo "Creating desktop Icon"
+FILE_NAME="${PWD}/NordVPN.desktop"
+echo ${FILE_NAME}
+touch NordVPN.desktop
+cat > $FILE_NAME <<EOF
+#!/usr/bin/env xdg-open
+
+[Desktop Entry]
+Version=1.0
+Type=Application
+Terminal=true
+Exec=${PWD}/NordVPNLinuxGUI.sh
+Name=NordVPN
+Icon=${PWD}/icon.jpg
+X-Desktop-File-Install-Version=0.24
+
+EOF
+
+sudo cp $FILE_NAME /usr/share/applications/NordVPN.desktop
+sudo cp /usr/share/applications/NordVPN.desktop ~/Desktop/NordVPN.desktop
+sudo chown $USER ~/Desktop/NordVPN.desktop
 echo "Finished Installation"
+echo "To Enable desktop launching, right click on the NordVON.desktop cog Icon and right click and select 'Allow Launching'"

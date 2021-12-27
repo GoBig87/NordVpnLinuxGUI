@@ -253,14 +253,14 @@ class SettingsScreen(Screen):
         # Drop down menu
         item_nord_lynx = {
             "viewclass": "IconListItem",
-            "icon": "data-usage",
+            "icon": "access-point-network",
             "text": "NordLynx",
             "height": dp(56),
             "on_release": self.set_technology_nordlynx,
         }
         item_open_vpn = {
             "viewclass": "IconListItem",
-            "icon": "data-usage",
+            "icon": "access-point-network",
             "text": "OpenVPN",
             "height": dp(56),
             "on_release": self.set_technology_openvpn,
