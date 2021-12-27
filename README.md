@@ -12,7 +12,9 @@ Install and setup the python virtual environment by running
 through a terminal in source code directory 
 
 Enable the desktop icon by right clicking and selecting "allow launching"
+
 ![allow_launching](https://user-images.githubusercontent.com/39137894/147505498-494322a1-9429-4638-8e11-ab2ceeb46a7e.png)
+
 ![launcher](https://user-images.githubusercontent.com/39137894/147505506-05c71846-509f-4ecb-95af-606ccebcafb5.png)
 
 
