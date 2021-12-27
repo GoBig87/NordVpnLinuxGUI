@@ -23,7 +23,7 @@ Builder.load_string("""
         MDCard:
             orientation: "horizontal"
             size_hint_y: None
-            height: dp(70)
+            height: dp(80)
             padding: 0, dp(10)
             BoxLayout:
                 orientation: "horizontal"
@@ -148,7 +148,12 @@ class MapScreen(Screen):
         self.build_country_list(search_text)
 
     def build_specialty_list(self, search_text=""):
-        label = MDLabel(text="Specialty List", size_hint=(1, None), height=dp(50), bold=True, halign="center")
+        label = MDLabel(text="Specialty Servers",
+                        size_hint=(1, None),
+                        height=dp(50),
+                        bold=True,
+                        padding=(dp(29), 0),
+                        halign="left")
         self.ids.selection.add_widget(label)
         for group in self.nord_client.group_list:
             if search_text:
@@ -158,7 +163,12 @@ class MapScreen(Screen):
                 self.ids.selection.add_widget(GroupSelection(group=group, connect=self.connect))
 
     def build_country_list(self, search_text=""):
-        label = MDLabel(text="Country List", size_hint=(1, None), height=dp(50), bold=True, halign="center")
+        label = MDLabel(text="Location Servers",
+                        size_hint=(1, None),
+                        height=dp(50),
+                        bold=True,
+                        padding=(dp(29), 0),
+                        halign="left")
         self.ids.selection.add_widget(label)
         for country in self.nord_client.country_dict:
             if search_text:

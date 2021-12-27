@@ -5,6 +5,15 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.lang.builder import Builder
 from kivy.uix.gridlayout import GridLayout
 
+ICON_TABLE = {
+    "Africa_The_Middle_East_And_India": "earth",
+    "P2P": "share",
+    "Asia_Pacific": "earth",
+    "Standard_VPN_Servers": "vpn",
+    "Europe": "earth",
+    "The_Americas": "earth",
+    "Onion_Over_VPN": "layers",
+}
 
 Builder.load_string("""
 <GroupSelection>
@@ -16,6 +25,8 @@ Builder.load_string("""
     BoxLayout:
         id: country_box
         orientation: "horizontal"
+        Widget:
+            size_hint_x: 0.05
         MDIcon:
             icon: root.group_icon
             size_hint_x: 0.2
@@ -47,6 +58,7 @@ class GroupSelection(GridLayout):
         super().__init__(**kwargs)
         self.group = group
         self.connect = connect
+        self.group_icon = ICON_TABLE.get(group, "broken-image")
         self.group_label = group.replace("_", " ")
         self.nord_client = App.get_running_app().nord_client
 

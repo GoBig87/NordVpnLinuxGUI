@@ -24,7 +24,7 @@ Builder.load_string("""
     BoxLayout:
         id: email_box
         orientation: "vertical"
-        spacing: dp(10)
+        spacing: dp(18)
         MDLabel:
             id: login_label
             text: root.login_text

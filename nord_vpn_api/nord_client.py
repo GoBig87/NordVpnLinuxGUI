@@ -239,12 +239,10 @@ class NordClient(object):
         self._send_command(cmd, self.login_rsp, self._base_error_cb)
 
     def login_success(self, output):
-        print(output)
         if output == "You are already logged in.":
             pass
         else:
             url = output.split("Continue in the browser: ")[1]
-            print(url)
             webbrowser.open(url)
 
     def _base_error_cb(self, error_cb):
@@ -296,14 +294,16 @@ class NordClient(object):
 
     def _send_command(self, *args):
         cmd = args[0]
-        print(cmd)
+        print(f"Sending Command: {cmd}")
         success_cb = args[1]
         error_cb = args[2]
         process = Popen([cmd], stdout=PIPE, stderr=PIPE, shell=True)
         output, error = process.communicate()
         if error:
+            print(f"Error: {str(error.decode('utf-8'))}")
             error_cb(str(error.decode("utf-8")))
         else:
+            print(f"Out: {str(output.decode('utf-8'))}")
             success_cb(str(output.decode("utf-8")))
 
     def set_dns(self, dns, success_cb=None, error_cb=None):
