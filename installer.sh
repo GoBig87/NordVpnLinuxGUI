@@ -28,7 +28,7 @@ cat > $FILE_NAME <<EOF
 [Desktop Entry]
 Version=1.0
 Type=Application
-Terminal=true
+Terminal=false
 Exec=${PWD}/NordVPNLinuxGUI.sh
 Name=NordVPN
 Icon=${PWD}/icon.jpg
