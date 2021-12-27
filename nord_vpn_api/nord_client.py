@@ -1,6 +1,7 @@
 from subprocess import Popen, PIPE
 from threading import Thread
 import webbrowser
+import re
 
 
 class NordClient(object):
@@ -17,18 +18,28 @@ class NordClient(object):
         self.cancel_login = False
         self._base_cmd = "nordvpn"
         self._account = "account"
+        self._add = "add"
+        self._all = "all"
         self._cities = "cities"
         self._connect = "connect"
         self._countries = "countries"
+        self._disable = "disable"
         self._disconnect = "disconnect"
+        self._dns = "dns"
+        self._enable = "enable"
         self._groups = "groups"
         self._login = "login"
         self._logout = "logout"
         self._rate = "rate"
         self._register = "register"
+        self._remove = "remove"
+        self._port = "port"
+        self._protocol = "protocol"
         self._set = "set"
         self._settings = "settings"
         self._status = "status"
+        self._subnet = "subnet"
+        self._technology = "technology"
         self._whitelist = "whitelist"
         self._help = "help"
         self._version = "version"
@@ -39,11 +50,19 @@ class NordClient(object):
         self.get_status()
         self.get_version()
 
-    def _setup_thread(self, cmd, succes_cb, error_cb):
-        thread = None
-        if succes_cb:
-            thread = Thread(target=self._send_command, args=(cmd, succes_cb, error_cb))
-        return thread
+    def add_whitelist_subnet(self, subnet, success_cb=None, error_cb=None):
+        cmd = f"{self._base_cmd} {self._whitelist} {self._add} {self._subnet} {subnet}"
+        thread = self._setup_thread(cmd, success_cb, error_cb)
+        if thread:
+            return thread.start()
+        self._send_command(cmd, self._base_success_cb(), self._base_error_cb)
+
+    def add_whitelist_port(self, port, success_cb=None, error_cb=None):
+        cmd = f"{self._base_cmd} {self._whitelist} {self._add} {self._port} {port}"
+        thread = self._setup_thread(cmd, success_cb, error_cb)
+        if thread:
+            return thread.start()
+        self._send_command(cmd, self._base_success_cb(), self._base_error_cb)
 
     def get_groups(self, success_cb=None, error_cb=None):
         cmd = f"{self._base_cmd} {self._groups}"
@@ -103,8 +122,10 @@ class NordClient(object):
                 key, value = item.split(":")
                 key_list = key.split()
                 key_list = list(filter(('-').__ne__, key_list))
+                if len(key_list) > 1:
+                    key_list = [f"{key_list[0]}_{key_list[1]}"]
                 self.status_dict[key_list[0]] = value
-        return self.settings_dict
+        return self.status_dict
 
     def get_settings(self, success_cb=None, error_cb=None):
         cmd = f"{self._base_cmd} {self._settings}"
@@ -114,13 +135,25 @@ class NordClient(object):
         self._send_command(cmd, self.get_settings_resp, self._base_error_cb)
 
     def get_settings_resp(self, output):
+        self.settings_dict = {}
+        self.settings_dict["Whitelisted_subnets"] = []
+        self.settings_dict["Whitelisted_ports"] = []
         rsp_list = output.split("\n")
         for item in rsp_list:
-            if item:
+            if "Whitelisted" in item:
+                pass
+            elif ":" in item:
                 key, value = item.split(":")
+                key.replace(" ", "_")
                 key_list = key.split()
                 key_list = list(filter(('-').__ne__, key_list))
-                self.settings_dict[key_list[0]] = value
+                if len(key_list) > 1:
+                    key_list = [f"{key_list[0]}_{key_list[1]}"]
+                self.settings_dict[key_list[0]] = value.replace(" ", "")
+            elif re.match(r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}", item.strip()):
+                self.settings_dict["Whitelisted_subnets"].append(item.strip())
+            elif re.match(r"\d{1,6}", item.strip().replace("(UDP|TCP)", "")):
+                self.settings_dict["Whitelisted_ports"].append(item.strip())
         return self.settings_dict
 
     def get_account_info(self, success_cb=None, error_cb=None):
@@ -145,11 +178,6 @@ class NordClient(object):
             self.email = ""
             self.vpn_service = ""
         return self.account_information, self.email, self.vpn_service
-
-    # def check_login(self, output):
-    #     print(output)
-    #     if "You are not logged in." not in output:
-    #         self.logged_in = True
 
     def connect(self, selection, success_cb=None, error_cb=None):
         cmd = f"{self._base_cmd} {self._connect} {selection}"
@@ -226,6 +254,41 @@ class NordClient(object):
     def _base_success_cb(self, error_cb):
         pass
 
+    def remove_all_whitelist(self, success_cb=None, error_cb=None):
+        cmd = f"{self._base_cmd} {self._whitelist} {self._remove} {self._all}"
+        thread = self._setup_thread(cmd, success_cb, error_cb)
+        if thread:
+            return thread.start()
+        self._send_command(cmd, self._base_success_cb(), self._base_error_cb)
+
+    def remove_all_whitelist_port(self, success_cb=None, error_cb=None):
+        cmd = f"{self._base_cmd} {self._whitelist} {self._remove} {self._port} {self._all}"
+        thread = self._setup_thread(cmd, success_cb, error_cb)
+        if thread:
+            return thread.start()
+        self._send_command(cmd, self._base_success_cb(), self._base_error_cb)
+
+    def remove_all_whitelist_subnet(self, success_cb=None, error_cb=None):
+        cmd = f"{self._base_cmd} {self._whitelist} {self._remove} {self._subnet} {self._all}"
+        thread = self._setup_thread(cmd, success_cb, error_cb)
+        if thread:
+            return thread.start()
+        self._send_command(cmd, self._base_success_cb(), self._base_error_cb)
+
+    def remove_whitelist_port(self, port, success_cb=None, error_cb=None):
+        cmd = f"{self._base_cmd} {self._whitelist} {self._remove} {self._port} {port}"
+        thread = self._setup_thread(cmd, success_cb, error_cb)
+        if thread:
+            return thread.start()
+        self._send_command(cmd, self._base_success_cb(), self._base_error_cb)
+
+    def remove_whitelist_subnet(self, subnet, success_cb=None, error_cb=None):
+        cmd = f"{self._base_cmd} {self._whitelist} {self._remove} {self._subnet} {subnet}"
+        thread = self._setup_thread(cmd, success_cb, error_cb)
+        if thread:
+            return thread.start()
+        self._send_command(cmd, self._base_success_cb(), self._base_error_cb)
+
     def _send_dir_command(self, cmd):
         process = Popen([cmd], stdout=PIPE, stderr=PIPE, shell=True)
         output, error = process.communicate()
@@ -233,6 +296,7 @@ class NordClient(object):
 
     def _send_command(self, *args):
         cmd = args[0]
+        print(cmd)
         success_cb = args[1]
         error_cb = args[2]
         process = Popen([cmd], stdout=PIPE, stderr=PIPE, shell=True)
@@ -241,3 +305,44 @@ class NordClient(object):
             error_cb(str(error.decode("utf-8")))
         else:
             success_cb(str(output.decode("utf-8")))
+
+    def set_dns(self, dns, success_cb=None, error_cb=None):
+        cmd = f"{self._base_cmd} {self._set} {self._dns} {dns}"
+        thread = self._setup_thread(cmd, success_cb, error_cb)
+        if thread:
+            return thread.start()
+        self._send_command(cmd, self._base_success_cb, self._base_error_cb)
+
+    def set_setting_enabled(self, setting, success_cb=None, error_cb=None):
+        cmd = f"{self._base_cmd} {self._set} {setting} {self._enable}"
+        thread = self._setup_thread(cmd, success_cb, error_cb)
+        if thread:
+            return thread.start()
+        self._send_command(cmd, self._base_success_cb, self._base_error_cb)
+
+    def set_setting_disabled(self, setting, success_cb=None, error_cb=None):
+        cmd = f"{self._base_cmd} {self._set} {setting} {self._disable}"
+        thread = self._setup_thread(cmd, success_cb, error_cb)
+        if thread:
+            return thread.start()
+        self._send_command(cmd, self._base_success_cb, self._base_error_cb)
+
+    def set_protocol(self, protocol, success_cb=None, error_cb=None):
+        cmd = f"{self._base_cmd} {self._set} {self._protocol} {protocol}"
+        thread = self._setup_thread(cmd, success_cb, error_cb)
+        if thread:
+            return thread.start()
+        self._send_command(cmd, self._base_success_cb, self._base_error_cb)
+
+    def set_technology(self, technology, success_cb=None, error_cb=None):
+        cmd = f"{self._base_cmd} {self._set} {self._technology} {technology}"
+        thread = self._setup_thread(cmd, success_cb, error_cb)
+        if thread:
+            return thread.start()
+        self._send_command(cmd, self._base_success_cb, self._base_error_cb)
+
+    def _setup_thread(self, cmd, succes_cb, error_cb):
+        thread = None
+        if succes_cb:
+            thread = Thread(target=self._send_command, args=(cmd, succes_cb, error_cb))
+        return thread

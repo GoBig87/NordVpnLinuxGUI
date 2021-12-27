@@ -9,6 +9,7 @@ from kivy.metrics import dp
 from kivy.network.urlrequest import UrlRequest
 
 from ui.widgets.dialog_spinner import DialogSpinner
+from ui.widgets.status_dialog import StatusDialog
 from ui.widgets.status_box import StatusBox
 from ui.widgets.country_selection import CountrySelection
 from ui.widgets.group_selection import GroupSelection
@@ -22,7 +23,7 @@ Builder.load_string("""
         MDCard:
             orientation: "horizontal"
             size_hint_y: None
-            height: dp(60)
+            height: dp(70)
             padding: 0, dp(10)
             BoxLayout:
                 orientation: "horizontal"
@@ -88,6 +89,7 @@ Builder.load_string("""
         padding: dp(10), dp(15)
         MDIconButton:
             icon: "information-outline"
+            on_press: root.open_status_dialog() 
 """)
 
 
@@ -129,6 +131,7 @@ class MapScreen(Screen):
         self.nord_client = App.get_running_app().nord_client
         self.ids.status_box.ids.login_status.bind(on_press=self.handle_login)
         self.login_dialog = DialogSpinner(info_text="Logging in..")
+        self.status_dialog = StatusDialog()
         self.login_dialog.bind(on_dismiss=self.cancel_login)
         self.connecting_dialog = DialogSpinner(info_text="Connecting..")
         self.ids.status_box.ids.location_status.location_label = self.country
@@ -293,6 +296,13 @@ class MapScreen(Screen):
 
     def location_error(self, req, result):
         pass
+
+    def open_status_dialog(self):
+        self.nord_client.get_status(self.open_status_dialog_cb, self.connect_error)
+
+    def open_status_dialog_cb(self, output):
+        status_dict = self.nord_client.get_status_resp(output)
+        self.status_dialog.update_data(status_dict)
 
     def switch_screen(self):
         App.get_running_app().content.current = "settings"

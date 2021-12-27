@@ -46,8 +46,8 @@ class LoginStatus(ButtonBehavior, BoxLayout):
     def set_logged_out(self):
         self.login_text = "Login"
         self.login_icon = "login"
-        widget = self.ids.email_box[0]
-        self.ids.email_box.remove_wdigets(widget)
+        widget = self.ids.email_box.children[0]
+        self.ids.email_box.remove_widget(widget)
 
     def set_logged_in(self, email):
         self.email = email
