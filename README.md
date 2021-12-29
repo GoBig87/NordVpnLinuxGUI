@@ -20,7 +20,7 @@ Enable the desktop icon by right clicking and selecting "allow launching"
 
 # Running
 Run the Nord Linux VPN client by running
-```./NordVpnLinuxGUI```
+```./NordVpnLinuxGUI.sh```
 through a terminal in source code directory after running the installation script.
 
 # Using
