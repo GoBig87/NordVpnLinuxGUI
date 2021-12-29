@@ -353,17 +353,18 @@ class SettingsScreen(Screen):
         for setting, value in settings.items():
             ids = setting
             ids.replace(" ", "_")
-            widget = self.ids[ids]
-            if setting in ["DNS", "Protocol", "Technology"]:
-                self.ids[setting].text = value
-            elif setting == "Whitelisted_subnets":
-                self.update_white_list(setting, value, "Subnet:")
-            elif setting == "Whitelisted_ports":
-                self.update_white_list(setting, value, "Port:")
-            elif value == "enabled":
-                widget.ids.switch.active = True
-            elif value == "disabled":
-                widget.ids.switch.active = False
+            if ids in self.ids.keys():
+                widget = self.ids[ids]
+                if setting in ["DNS", "Protocol", "Technology"]:
+                    self.ids[setting].text = value
+                elif setting == "Whitelisted_subnets":
+                    self.update_white_list(setting, value, "Subnet:")
+                elif setting == "Whitelisted_ports":
+                    self.update_white_list(setting, value, "Port:")
+                elif value == "enabled":
+                    widget.ids.switch.active = True
+                elif value == "disabled":
+                    widget.ids.switch.active = False
 
     def update_white_list(self, setting, value, type):
         self.ids[setting].clear_widgets()
