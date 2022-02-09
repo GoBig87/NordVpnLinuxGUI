@@ -98,3 +98,12 @@ class StatusDialog(BaseDialog):
                 font_size=24,
             ))
         self.open()
+
+    def open_error(self, error):
+        self.ids.container.clear_widgets()
+        self.ids.container.add_widget(MDLabel(
+            text=error,
+            font_style="Subtitle1",
+            font_size=24,
+        ))
+        Clock.schedule_once(self.open, 2)

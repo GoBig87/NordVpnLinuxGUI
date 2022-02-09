@@ -5,7 +5,11 @@ import re
 
 
 class NordClient(object):
-    def __init__(self):
+    def __init__(self, error_cb=None):
+        if error_cb:
+            self.error_cb = error_cb
+        else:
+            self.error_cb = self._base_error
         self.account_information = ""
         self.email = ""
         self.vpn_service = ""
@@ -72,9 +76,16 @@ class NordClient(object):
         self._send_command(cmd, self.get_groups_resp, self._base_error_cb)
 
     def get_groups_resp(self, output):
-        group_list = output.replace(",", "").split()
-        group_list = list(filter(('-').__ne__, group_list))
-        self.group_list = group_list
+        print(f"hello {output}")
+        if "Please check your internet connection and try again." in output:
+            self.error_cb("", output)
+            return []
+        try:
+            group_list = output.replace(",", "").split()
+            group_list = list(filter(('-').__ne__, group_list))
+            self.group_list = group_list
+        except:
+            self.error_cb("Failed to parse group.  Found: ", output)
         return group_list
 
     def get_countries(self, success_cb=None, error_cb=None):
@@ -85,16 +96,22 @@ class NordClient(object):
         self._send_command(cmd, self.get_countries_resp, self._base_error_cb)
 
     def get_countries_resp(self, output):
-        country_list = output.replace(",", "").split()
-        country_list = list(filter(('-').__ne__, country_list))
-        for country in country_list:
-            cmd = f"{self._base_cmd} {self._cities} {country}"
-            outs, err = self._send_dir_command(cmd)
-            city_list = []
-            if outs:
-                city_list = outs.replace(",", "").split()
-            city_list = list(filter(('-').__ne__, city_list))
-            self.country_dict[country] = city_list
+        if "Please check your internet connection and try again." in output:
+            self.error_cb("", output)
+            return self.country_dict
+        try:
+            country_list = output.replace(",", "").split()
+            country_list = list(filter(('-').__ne__, country_list))
+            for country in country_list:
+                cmd = f"{self._base_cmd} {self._cities} {country}"
+                outs, err = self._send_dir_command(cmd)
+                city_list = []
+                if outs:
+                    city_list = outs.replace(",", "").split()
+                city_list = list(filter(('-').__ne__, city_list))
+                self.country_dict[country] = city_list
+        except:
+            self.error_cb("Failed to parse Country list.  Found: ", output)
         return self.country_dict
 
     def get_version(self, success_cb=None, error_cb=None):
@@ -105,6 +122,9 @@ class NordClient(object):
         self._send_command(cmd, self.get_version_resp, self._base_error_cb)
 
     def get_version_resp(self, output):
+        if "Please check your internet connection and try again." in output:
+            self.error_cb("", output)
+            return ""
         self.version = output
         return self.version
 
@@ -116,15 +136,21 @@ class NordClient(object):
         self._send_command(cmd, self.get_status_resp, self._base_error_cb)
 
     def get_status_resp(self, output):
-        rsp_list = output.split("\n")
-        for item in rsp_list:
-            if item:
-                key, value = item.split(":")
-                key_list = key.split()
-                key_list = list(filter(('-').__ne__, key_list))
-                if len(key_list) > 1:
-                    key_list = [f"{key_list[0]}_{key_list[1]}"]
-                self.status_dict[key_list[0]] = value
+        if "Please check your internet connection and try again." in output:
+            self.error_cb("", output)
+            return self.status_dict
+        try:
+            rsp_list = output.split("\n")
+            for item in rsp_list:
+                if item:
+                    key, value = item.split(":")
+                    key_list = key.split()
+                    key_list = list(filter(('-').__ne__, key_list))
+                    if len(key_list) > 1:
+                        key_list = [f"{key_list[0]}_{key_list[1]}"]
+                    self.status_dict[key_list[0]] = value
+        except:
+            self.error_cb("Failed to parse Status.  Found: ", output)
         return self.status_dict
 
     def get_settings(self, success_cb=None, error_cb=None):
@@ -138,22 +164,28 @@ class NordClient(object):
         self.settings_dict = {}
         self.settings_dict["Whitelisted_subnets"] = []
         self.settings_dict["Whitelisted_ports"] = []
-        rsp_list = output.split("\n")
-        for item in rsp_list:
-            if "Whitelisted" in item:
-                pass
-            elif ":" in item:
-                key, value = item.split(":")
-                key.replace(" ", "_")
-                key_list = key.split()
-                key_list = list(filter(('-').__ne__, key_list))
-                if len(key_list) > 1:
-                    key_list = [f"{key_list[0]}_{key_list[1]}"]
-                self.settings_dict[key_list[0]] = value.replace(" ", "")
-            elif re.match(r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}", item.strip()):
-                self.settings_dict["Whitelisted_subnets"].append(item.strip())
-            elif re.match(r"\d{1,6}", item.strip().replace("(UDP|TCP)", "")):
-                self.settings_dict["Whitelisted_ports"].append(item.strip())
+        if "Please check your internet connection and try again." in output:
+            self.error_cb("", output)
+            return self.settings_dict
+        try:
+            rsp_list = output.split("\n")
+            for item in rsp_list:
+                if "Whitelisted" in item:
+                    pass
+                elif ":" in item:
+                    key, value = item.split(":")
+                    key.replace(" ", "_")
+                    key_list = key.split()
+                    key_list = list(filter(('-').__ne__, key_list))
+                    if len(key_list) > 1:
+                        key_list = [f"{key_list[0]}_{key_list[1]}"]
+                    self.settings_dict[key_list[0]] = value.replace(" ", "")
+                elif re.match(r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}", item.strip()):
+                    self.settings_dict["Whitelisted_subnets"].append(item.strip())
+                elif re.match(r"\d{1,6}", item.strip().replace("(UDP|TCP)", "")):
+                    self.settings_dict["Whitelisted_ports"].append(item.strip())
+        except:
+            self.error_cb("Failed to parse Settings.  Found: ", output)
         return self.settings_dict
 
     def get_account_info(self, success_cb=None, error_cb=None):
@@ -346,3 +378,6 @@ class NordClient(object):
         if succes_cb:
             thread = Thread(target=self._send_command, args=(cmd, succes_cb, error_cb))
         return thread
+
+    def _base_error(self, error):
+        print(error)
