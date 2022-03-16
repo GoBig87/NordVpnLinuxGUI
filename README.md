@@ -8,7 +8,7 @@ or download the compressed file here
 ```https://github.com/GoBig87/NordVpnLinuxGUI/tags```
 
 Install and setup the python virtual environment by running
-```./install.sh```
+```./installer.sh```
 through a terminal in source code directory 
 
 Enable the desktop icon by right clicking and selecting "allow launching"
