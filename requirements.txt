@@ -2,7 +2,7 @@ certifi==2021.10.8
 charset-normalizer==2.0.9
 docutils==0.18.1
 idna==3.3
-Kivy==2.0.0
+Kivy==2.1.0
 Kivy-Garden==0.1.4
 kivy-garden.mapview==1.0.5
 kivymd==0.104.2
