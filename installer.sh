@@ -38,7 +38,7 @@ X-Desktop-File-Install-Version=0.24
 EOF
 
 sudo cp $FILE_NAME /usr/share/applications/NordVPN.desktop
-sudo cp /usr/share/applications/NordVPN.desktop ~/Desktop/NordVPN.desktop
-sudo chown $USER ~/Desktop/NordVPN.desktop
+sudo cp /usr/share/applications/NordVPN.desktop /home/$USER/Desktop/NordVPN.desktop
+sudo chown $USER /home/$USER/Desktop/NordVPN.desktop
 echo "Finished Installation"
-echo "To Enable desktop launching, right click on the NordVON.desktop cog Icon and right click and select 'Allow Launching'"
+echo "To Enable desktop launching, right click on the NordVPN.desktop cog Icon and right click and select 'Allow Launching'"
