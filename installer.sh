@@ -1,5 +1,6 @@
 #!/bin/bash
 # Install nordvpn
+sudo apt install curl
 sudo usermod -aG nordvpn $USER
 sh <(curl -sSf https://downloads.nordcdn.com/apps/linux/install.sh)
 

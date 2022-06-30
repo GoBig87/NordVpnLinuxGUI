@@ -4,6 +4,12 @@ import webbrowser
 import re
 
 
+MESH_WARNING = "New feature - Meshnet! Link remote devices in Meshnet to connect " \
+               "to them directly over encrypted private tunnels, and route your " \
+               "traffic through another device. Use the `nordvpn meshnet --help` " \
+               "command to get started. Learn more: https://nordvpn.com/features/meshnet/\n"
+
+
 class NordClient(object):
     def __init__(self, error_cb=None):
         if error_cb:
@@ -322,7 +328,7 @@ class NordClient(object):
     def _send_dir_command(self, cmd):
         process = Popen([cmd], stdout=PIPE, stderr=PIPE, shell=True)
         output, error = process.communicate()
-        return output.decode("utf-8"), error.decode("utf-8")
+        return output.decode("utf-8").replace(MESH_WARNING, ''), error.decode("utf-8")
 
     def _send_command(self, *args):
         cmd = args[0]
@@ -335,8 +341,8 @@ class NordClient(object):
             print(f"Error: {str(error.decode('utf-8'))}")
             error_cb(str(error.decode("utf-8")))
         else:
-            print(f"Out: {str(output.decode('utf-8'))}")
-            success_cb(str(output.decode("utf-8")))
+            print(f"{str(output.decode('utf-8')).replace(MESH_WARNING, '')}")
+            success_cb(str(output.decode("utf-8").replace(MESH_WARNING, '')))
 
     def set_dns(self, dns, success_cb=None, error_cb=None):
         cmd = f"{self._base_cmd} {self._set} {self._dns} {dns}"
