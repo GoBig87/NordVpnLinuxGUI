@@ -25,7 +25,6 @@ if [ "$EUID" -eq 0 ]
   exit
 fi
 
-
 version=$(python3 -V 2>&1 | grep -Po '(?<=Python )(.+)')
 if [[ -z "$version" ]]
 then
@@ -34,7 +33,7 @@ then
 fi
 echo $version
 
-source /etc/os-release
+source /etc/lsb-release
 if [ "$DISTRIB_ID" = "ManjaroLinux" ]; then
   install_manjaro
 else
