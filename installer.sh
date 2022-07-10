@@ -1,5 +1,30 @@
 #!/bin/bash
 
+install_manjaro() {
+  pamac build nordvpn-bin
+  sudo systemctl enable --now nordvpnd
+
+  pamac install xclip
+  pamac install python3-pip
+  pamac install python3-venv
+}
+
+install_debian() {
+  # Install nordvpn
+  sudo apt install curl
+  sh <(curl -sSf https://downloads.nordcdn.com/apps/linux/install.sh)
+
+  sudo apt update
+  sudo apt install -y xclip
+  sudo apt install python3-pip
+  sudo apt install python3-venv
+}
+
+if [ "$EUID" -eq 0 ]
+  then echo "Please do not run as root.  Commands that need root access will request it."
+  exit
+fi
+
 
 version=$(python3 -V 2>&1 | grep -Po '(?<=Python )(.+)')
 if [[ -z "$version" ]]
@@ -10,10 +35,10 @@ fi
 echo $version
 
 source /etc/os-release
-if [[ "$DISTRIB_ID" == "ManjaroLinux"]]]; then
-  install_manjaro()
+if [ "$DISTRIB_ID" = "ManjaroLinux" ]; then
+  install_manjaro
 else
-  install_debian()
+  install_debian
 fi
 
 sudo usermod -aG nordvpn $USER
@@ -47,23 +72,3 @@ sudo chown $USER /home/$USER/Desktop/NordVPN.desktop
 echo "Finished Installation"
 echo "To Enable desktop launching, right click on the NordVPN.desktop cog Icon and right click and select 'Allow Launching'"
 
-
-install_manjaro() {
-  pamac build nordvpn-bin
-  sudo systemctl enable --now nordvpnd
-
-  pamac install xclip
-  pamac install python3-pip
-  pamac install python3-venv
-}
-
-install_debian() {
-  # Install nordvpn
-  sudo apt install curl
-  sh <(curl -sSf https://downloads.nordcdn.com/apps/linux/install.sh)
-
-  sudo apt update
-  sudo apt install -y xclip
-  sudo apt install python3-pip
-  sudo apt install python3-venv
-}
