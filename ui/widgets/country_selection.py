@@ -13,7 +13,7 @@ Builder.load_string("""
 <CitySelection>
     id: city_box
     orientation: "vertical"
-    spacing: dp(5), dp(10)
+    spacing: dp(10)
     height: dp(50)
     BoxLayout:
         orientation: "horizontal"
