@@ -53,6 +53,7 @@ class NordClient(object):
         self._whitelist = "whitelist"
         self._help = "help"
         self._version = "version"
+        self.which_nordvpn()
         self.get_countries()
         self.get_groups()
         self.get_settings()
@@ -73,6 +74,17 @@ class NordClient(object):
         if thread:
             return thread.start()
         self._send_command(cmd, self._base_success_cb(), self._base_error_cb)
+
+    def which_nordvpn(self, success_cb=None, error_cb=None):
+        cmd = f"which nordvpn"
+        thread = self._setup_thread(cmd, success_cb, error_cb)
+        if thread:
+            return thread.start()
+        self._send_command(cmd, self.which_nordvpn_resp, self.which_nordvpn_resp)
+
+    def which_nordvpn_resp(self, output):
+        if output == "":
+            self.error_cb("", "nordvpn command line client has not been installed.  Please inspect install logs")
 
     def get_groups(self, success_cb=None, error_cb=None):
         cmd = f"{self._base_cmd} {self._groups}"
