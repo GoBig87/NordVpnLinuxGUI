@@ -33,9 +33,9 @@ fi
 echo $version
 
 source /etc/lsb-release
-if [ -f "/etc/arch-released" ]; then
+if [ -f "/etc/arch-release" ]; then
   install_arch
-elif [ -f "/etc/debian-versiond" ]; then
+elif [ -f "/etc/debian-version" ]; then
   install_debian
 else
   echo -e "This program only officially supports Arch and Debian based distros, you require these dependencies \n[python3-venv, python3-pip, xclip, https://nordvpn.com/download/linux/] \nIf you would like to continue with the install and install the dependencies yourself enter Y \notherwise press anykey to exit the installer"
