@@ -5,8 +5,8 @@ install_arch() {
   sudo systemctl enable --now nordvpnd
 
   pamac install xclip
-  pamac install python3-pip
-  pamac install python3-venv
+  pamac install python-pip
+  pamac install python-virtualenv
 }
 
 install_debian() {
