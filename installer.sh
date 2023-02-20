@@ -1,6 +1,6 @@
 #!/bin/bash
 
-install_manjaro() {
+install_arch() {
   pamac build nordvpn-bin
   sudo systemctl enable --now nordvpnd
 
@@ -26,18 +26,24 @@ if [ "$EUID" -eq 0 ]
 fi
 
 version=$(python3 -V 2>&1 | grep -Po '(?<=Python )(.+)')
-if [[ -z "$version" ]]
-then
+if [[ -z "$version" ]]; then
     echo "No Python3 detected.  Install Python3 to install"
     exit
 fi
 echo $version
 
 source /etc/lsb-release
-if [ "$DISTRIB_ID" = "ManjaroLinux" ]; then
-  install_manjaro
-else
+if [ -f "/etc/arch-released" ]; then
+  install_arch
+elif [ -f "/etc/debian-versiond" ]; then
   install_debian
+else
+  echo -e "This program only officially supports Arch and Debian based distros, you require these dependencies \n[python3-venv, python3-pip, xclip, https://nordvpn.com/download/linux/] \nIf you would like to continue with the install and install the dependencies yourself enter Y \notherwise press anykey to exit the installer"
+  read continue
+  if [[ $continue != "y" ]] && [[ $continue != "Y" ]]; then
+    echo "exiting installer"
+    exit
+  fi
 fi
 
 sudo usermod -aG nordvpn $USER
